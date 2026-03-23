@@ -1,59 +1,75 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>Dashboard Telemetría</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dashboard Telemetría</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
-<h2>Telemetría Casa1</h2>
+    <h2>Telemetría Casa1</h2>
 
-<form method="get">
-    <label>Selecciona casa:</label>
-    <select name="house" onchange="this.form.submit()">
-        {% for house in houses %}
-            <option value="{{ house }}" {% if house == selected_house %}selected{% endif %}>
+    <form method="get">
+        <label>Selecciona casa:</label>
+        <select name="house" onchange="this.form.submit()">
+            {% for house in houses %}
+            <option value="{{ house }}" {% if house==selected_house %}selected{% endif %}>
                 {{ house }}
             </option>
-        {% endfor %}
-    </select>
-</form>
+            {% endfor %}
+        </select>
+    </form>
 
-<canvas id="chart"></canvas>
+    <canvas id="chart"></canvas>
 
-<script>
+    <h3>Enviar mensaje JSON a la casa</h3>
 
-const labels = {{ timestamps | tojson }};
-const temperature = {{ temperature | tojson }};
-const humidity = {{ humidity | tojson }};
-const distance = {{ distance | tojson }};
-
-new Chart(document.getElementById("chart"), {
-    type: "line",
-    data: {
-        labels: labels,
-        datasets: [
+    <form method="post" action="/send">
+        <textarea name="message" rows="6" cols="50">
             {
-                label: "Temperatura (C)",
-                data: temperature,
-                borderColor: "red"
-            },
-            {
-                label: "Humedad (%)",
-                data: humidity,
-                borderColor: "blue"
-            },
-            {
-                label: "Distancia (cm)",
-                data: distance,
-                borderColor: "green"
+                "home": "Casa1",
+                "device": "LCD",
+                "messsage": "Hola mundo!!!"
             }
-        ]
-    }
-});
+        </textarea>
+        <br>
+        <button type="submit">Enviar</button>
+    </form>
 
-</script>
+    <script>
+
+        const labels = {{ timestamps | tojson }};
+        const temperature = {{ temperature | tojson }};
+        const humidity = {{ humidity | tojson }};
+        const distance = {{ distance | tojson }};
+
+        new Chart(document.getElementById("chart"), {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Temperatura (C)",
+                        data: temperature,
+                        borderColor: "red"
+                    },
+                    {
+                        label: "Humedad (%)",
+                        data: humidity,
+                        borderColor: "blue"
+                    },
+                    {
+                        label: "Distancia (cm)",
+                        data: distance,
+                        borderColor: "green"
+                    }
+                ]
+            }
+        });
+
+    </script>
 
 </body>
+
 </html>

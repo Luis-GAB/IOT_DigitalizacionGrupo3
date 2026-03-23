@@ -53,6 +53,15 @@ def index():
         selected_house=selected_house
     )
 
+@app.route("/send", methods=["POST"])
+def send():
+
+    message = request.form.get("message")
+
+    # Aquí lo puedes mandar a AWS IoT Core
+    print("JSON enviado:", message)
+
+    return "Mensaje enviado"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)

@@ -9,6 +9,17 @@
 
 <h2>Telemetría Casa1</h2>
 
+<form method="get">
+    <label>Selecciona casa:</label>
+    <select name="house" onchange="this.form.submit()">
+        {% for house in houses %}
+            <option value="{{ house }}" {% if house == selected_house %}selected{% endif %}>
+                {{ house }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
 <canvas id="chart"></canvas>
 
 <script>

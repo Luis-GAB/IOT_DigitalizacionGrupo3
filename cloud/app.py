@@ -1,5 +1,6 @@
 import json
-from flask import Flask, render_template
+import subprocess
+from flask import Flask, render_template, request
 from datetime import datetime
 
 app = Flask(__name__)
@@ -12,12 +13,21 @@ def index():
 
     items = data["Items"]
 
+    # Obtener lista de casas únicas
+    houses = list(set(item["house"]["S"] for item in items))
+
+    # Casa seleccionada (por defecto la primera)
+    selected_house = request.args.get("house", houses[0])
+
     timestamps = []
     temperature = []
     humidity = []
     distance = []
 
     for item in items:
+
+        if item["house"]["S"] != selected_house:
+            continue
 
         payload = item["payload"]["M"]
 
@@ -38,7 +48,9 @@ def index():
         timestamps=timestamps,
         temperature=temperature,
         humidity=humidity,
-        distance=distance
+        distance=distance,
+        houses=houses,
+        selected_house=selected_house
     )
 
 

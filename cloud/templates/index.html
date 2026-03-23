@@ -8,6 +8,13 @@
 
 <body>
 
+    <form action="/refresh" method="get" style="margin-bottom: 20px;">
+        <input type="hidden" name="house" value="{{ selected_house }}">
+        <button type="submit" onclick="this.disabled=true; this.innerText='Actualizando...'">
+            🔄 Actualizar datos
+        </button>
+    </form>
+
     <h2>Telemetría Casa1</h2>
 
     <form method="get">
@@ -26,12 +33,13 @@
     <h3>Enviar mensaje JSON a la casa</h3>
 
     <form method="post" action="/send">
+        <input type="hidden" name="house" value="{{ selected_house }}">
+
         <textarea name="message" rows="6" cols="50">
-            {
-                "home": "Casa1",
-                "device": "LCD",
-                "messsage": "Hola mundo!!!"
-            }
+{
+    "device": "LCD",
+    "messsage": "Hola mundo!!!"
+}
         </textarea>
         <br>
         <button type="submit">Enviar</button>

@@ -1,6 +1,6 @@
 import json
 import subprocess
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
 
 app = Flask(__name__)
@@ -56,12 +56,40 @@ def index():
 @app.route("/send", methods=["POST"])
 def send():
 
+    import json
+
     message = request.form.get("message")
+    house = request.form.get("house")
 
-    # Aquí lo puedes mandar a AWS IoT Core
-    print("JSON enviado:", message)
+    try:
+        # Convertir string → dict
+        data = json.loads(message)
 
-    return "Mensaje enviado"
+        # Inyectar house
+        data["house"] = house
+
+        # Volver a string JSON listo para enviar
+        final_message = json.dumps(data)
+
+        print("JSON enviado a IoT:", final_message)
+
+    except Exception as e:
+        print("Error procesando JSON:", e)
+
+    if house:
+        return redirect(url_for("index", house=house))
+    else:
+        return redirect(url_for("index"))
+
+@app.route("/refresh")
+def refresh():
+
+    subprocess.run(
+        "aws dynamodb scan --table-name telemetry --output json > ../datos.json",
+        shell=True
+    )
+
+    return redirect(url_for("index", house=house))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)

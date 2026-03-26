@@ -189,8 +189,8 @@ También tenemos un apartado para mandar una operación a la casa, igual que hic
 
 ## 🧠 Funcionalidades
 
-✔ Monitorización de todas las casas del sistema
-✔ Acciones simples sobre cada casa (Solo LCD)
+- Monitorización de todas las casas del sistema.
+- Acciones simples sobre cada casa (Solo LCD)
 
 ---
 

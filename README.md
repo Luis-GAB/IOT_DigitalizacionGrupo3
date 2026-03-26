@@ -29,9 +29,9 @@ Los elementos HW clave para la plataforma son:
 
 Los elementos SW clave para la plataforma son:
 
-- **slave**: [SW para Arduino](slave/README.md) para manejar sensores y accionadores, sin UI, simplemente acceso mediante USB. 
-- **master**: [SW para Raspberry](master/README.md) para tener una UI para la casa en Local y darle acceso al entorno cloud en AWS.
- - **cloud**: [SW para Raspberry](cloud/README.md) para tener una UI para la casa en Remoto, explota la información de AWS y permite controlar todas las casas conectadas al entorno CLOUD.
+- **slave**: [SW para Arduino](slave/README.md) para manejar sensores y accionadores, sin UI, simplemente acceso mediante USB. C++ (INO)
+- **master**: [SW para Raspberry](master/README.md) para tener una UI para la casa en Local y darle acceso al entorno cloud en AWS. Python/Flusk
+ - **cloud**: [SW para EC2](cloud/README.md) para tener una UI para la casa en Remoto, explota la información de AWS y permite controlar todas las casas conectadas al entorno CLOUD. Python/Flusk
 
 
 ## Casos de Uso a implementar

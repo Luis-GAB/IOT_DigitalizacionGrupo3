@@ -139,9 +139,9 @@ Para configurarar conexión salida Cloud.
 
 ## 🧠 Funcionalidades
 
-✔ Control de acción sobre elementos de la casa (LED, RGB, Buzzer, LCD, Motor)  
-✔ Lectura de los sensores de la casa (Temperatura, Humedad, Presencía, Fuego)
-✔ Configuración/Conexión AWS IOTCore como si fuera un THING, mediante MQTT
+- Control de acción sobre elementos de la casa (LED, RGB, Buzzer, LCD, Motor)  
+- Lectura de los sensores de la casa (Temperatura, Humedad, Presencía, Fuego)
+- Configuración/Conexión AWS IOTCore como si fuera un THING, mediante MQTT
 
 ---
 

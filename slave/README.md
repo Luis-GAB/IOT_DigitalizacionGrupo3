@@ -97,13 +97,13 @@ Instalar:
 
 ## 🧠 Funcionalidades
 
-✔ Lectura de sensores (temperatura, humedad, fuego, luz, microfono, distancia, presencia, gas)  
-✔ Manejo de las luces (Leds y RGB)  
-✔ Entrada de teclado y RFID 
-✔ Escritura en pantalla LCD  
-✔ Manejo de motor para puerta de entrada
-✔ Buzzer
-✔ Comunicación por puerto serie USB  
+- Lectura de sensores (temperatura, humedad, fuego, luz, microfono, distancia, presencia, gas)  
+- Manejo de las luces (Leds y RGB)  
+- Entrada de teclado y RFID 
+- Escritura en pantalla LCD  
+- Manejo de motor para puerta de entrada
+- Buzzer
+- Comunicación por puerto serie USB  
 
 ---
 

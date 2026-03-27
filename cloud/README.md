@@ -1,7 +1,7 @@
 # 🏠 SmartHome IoT SW Control Remoto de las casas
 ### Control de todas las vivienda mediante APP WEB.
 
-![Pyhton/Flusk](https://img.shields.io/badge/Python-Flusk-green?logo=pythonflusk)
+![Pyhton/Flask](https://img.shields.io/badge/Python-Flask-green?logo=pythonflask)
 ![Raspberry PI](https://img.shields.io/badge/Raspberry-IoT-blue?logo=raspberry)
 ![AWS IOTCore](https://img.shields.io/badge/AWS-IOTCore-blue?logo=iot-core)
 ![AWS DynamoDB](https://img.shields.io/badge/AWS-DynamoDB-blue?logo=dynamodb)
@@ -15,7 +15,7 @@ Esta aplicación web consigue controlar todas las casas desde un único centro d
 
 ## 📌 Descripción
 
-Este SW es una aplicación WEB en python/flusk para poder monitorizar/controlar todas las casas al mismo tiempo desde un dispositivo conectado a Internet.
+Este SW es una aplicación WEB en python/flask para poder monitorizar/controlar todas las casas al mismo tiempo desde un dispositivo conectado a Internet.
 
 Básicamente consulta los datos de las casas desde una BBDD en AWS DynamoDB y permite mandar mensajes a cada una de lasa casas para controlar sus dispositivos o cambiar su comportamiento mediante el envio de mensajes MQTT a AWS IOTCore.
 

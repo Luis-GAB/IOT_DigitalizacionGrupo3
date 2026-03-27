@@ -1,6 +1,6 @@
 # Laboratorio IOT para Digitalización DAM en Cuatrovientos
 
-![Pyhton/Flusk](https://img.shields.io/badge/Python-Flusk-green?logo=pythonflusk)
+![Pyhton/Flask](https://img.shields.io/badge/Python-Flask-green?logo=pythonflask)
 ![Arduino](https://img.shields.io/badge/Arduino-IoT-blue?logo=arduino)
 ![Raspberry PI](https://img.shields.io/badge/Raspberry-IoT-blue?logo=raspberry)
 ![AWS IOTCore](https://img.shields.io/badge/AWS-IOTCore-blue?logo=iot-core)
@@ -30,8 +30,8 @@ Los elementos HW clave para la plataforma son:
 Los elementos SW clave para la plataforma son:
 
 - **slave**: [SW para Arduino](slave/README.md) para manejar sensores y accionadores, sin UI, simplemente acceso mediante USB. C++ (INO)
-- **master**: [SW para Raspberry](master/README.md) para tener una UI para la casa en Local y darle acceso al entorno cloud en AWS. Python/Flusk
- - **cloud**: [SW para EC2](cloud/README.md) para tener una UI para la casa en Remoto, explota la información de AWS y permite controlar todas las casas conectadas al entorno CLOUD. Python/Flusk
+- **master**: [SW para Raspberry](master/README.md) para tener una UI para la casa en Local y darle acceso al entorno cloud en AWS. Python/Flask
+ - **cloud**: [SW para EC2](cloud/README.md) para tener una UI para la casa en Remoto, explota la información de AWS y permite controlar todas las casas conectadas al entorno CLOUD. Python/Flask
 
 
 ## Casos de Uso a implementar

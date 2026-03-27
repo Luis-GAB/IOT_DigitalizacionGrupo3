@@ -1,7 +1,7 @@
 # 🏠 SmartHome IoT con Raspberry 
 ### Control de vivienda mediante APP WEB y conexión a USB a Arduino
 
-![Pyhton/Flusk](https://img.shields.io/badge/Python-Flusk-green?logo=pythonflusk)
+![Pyhton/Flask](https://img.shields.io/badge/Python-Flask-green?logo=pythonflask)
 ![Raspberry PI](https://img.shields.io/badge/Raspberry-IoT-blue?logo=raspberry)
 ![Status](https://img.shields.io/badge/status-en%20desarrollo-yellow)
 
@@ -148,7 +148,7 @@ Para configurarar conexión salida Cloud.
 ## ⚠️ Notas importantes
 
 - Hay que hacer un trabajo de configuración de la Raspberry, sobre todo si viene de gráfica
-- El SW es una aplicación WEB en Python+Flusk  
+- El SW es una aplicación WEB en Python+Flask  
 - Permite un control local de la casa
 - Para comunicación con AWS IOTCore hay que cargar los certificados de conexión, las instrucciones están en el README de cloud.
 

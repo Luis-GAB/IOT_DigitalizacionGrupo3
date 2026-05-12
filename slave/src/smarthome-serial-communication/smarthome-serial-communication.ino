@@ -198,27 +198,24 @@ void executeCommand(String cmd) {
 
 void readAllSensors() {
 
-  String estados = "";
-
   if (ledLight) {
-    estados += "Luz Led encendida.";
+    Serial.println("Result: Led Light: ON");
   } else {
-    estados += "Luz Led apagada.";
+    Serial.println("Result: Led Light: OFF");
   }
 
   if (rgbLight == "red") {
-    estados += "Luz rgb en rojo";
+    Serial.println("Result: RGB Light: RED");
   } else if (rgbLight == "green") {
-    estados += "Luz rgb en verde";
+    Serial.println("Result: RGB Light: GREEN");
   } else if (rgbLight == "blue") {
-    estados += "Luz rgb en azul";
+    Serial.println("Result: RGB Light: BLUE");
   } else if (rgbLight == "none") {
-    estados += "Luz rgb apagada";
+    Serial.println("Result: RGB Light: OFF");
   } else {
-    estados += "Luz rgb en estado no identificado";
+    Serial.println("Result: RGB Light: UNKNOWN");
   }
 
-  Serial.println(estados);
 }
 
 void handleKeypad() {

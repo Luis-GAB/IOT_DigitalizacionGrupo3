@@ -212,6 +212,10 @@ void readAllSensors() {
     estados += "Luz rgb en verde";
   } else if (rgbLight == "blue") {
     estados += "Luz rgb en azul";
+  } else if (rgbLight == "none") {
+    estados += "Luz rgb apagada";
+  } else {
+    estados += "Luz rgb en estado no identificado";
   }
 
   Serial.println(estados);

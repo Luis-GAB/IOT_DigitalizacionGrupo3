@@ -134,13 +134,13 @@ void executeCommand(String cmd) {
   Serial.print("Executing command: ");
   Serial.println(cmd);
 
-  if (cmd.startsWith("led")) {
+  if (cmd.startsWith("ledGreen")) {
     if (cmd.indexOf("on") > 0) {
-      digitalWrite(LED_BUILTIN, HIGH);
-      Serial.println("Result: LED is ON");
+      digitalWrite(greenLED, HIGH);
+      Serial.println("Result: Green LED is ON");
     } else if (cmd.indexOf("off") > 0) {
-      digitalWrite(LED_BUILTIN, LOW);
-      Serial.println("Result: LED is OFF");
+      digitalWrite(greenLED, LOW);
+      Serial.println("Result: Green LED is OFF");
     }
   } else if (cmd.startsWith("rgb")) {
     if (cmd.indexOf("red") > 0) {

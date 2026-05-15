@@ -74,6 +74,8 @@ byte colPins[COLS] = {41, 43, 45, 47};
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
 String command = "";
+bool ledLight = false;
+String rgbLight = "none";
 
 void setup() {
   // Initialize Serial
@@ -146,12 +148,15 @@ void executeCommand(String cmd) {
     if (cmd.indexOf("red") > 0) {
       color(255, 0, 0);
       Serial.println("Result: RGB set to RED");
+      rgbLight = "red";
     } else if (cmd.indexOf("green") > 0) {
       color(0, 255, 0);
       Serial.println("Result: RGB set to GREEN");
+      rgbLight = "green";
     } else if (cmd.indexOf("blue") > 0) {
       color(0, 0, 255);
       Serial.println("Result: RGB set to BLUE");
+      rgbLight = "blue";
     }
   } else if (cmd.startsWith("buzzer")) {
     if (cmd.indexOf("on") > 0) {
@@ -161,7 +166,7 @@ void executeCommand(String cmd) {
       digitalWrite(buzzer, LOW);
       Serial.println("Result: Buzzer is OFF");
     }
-  } else if (cmd.startsWith("sensors")) {
+  } else if (cmd.startsWith("sensores")) {
     readAllSensors();
   } else if (cmd.startsWith("servo")) {
       if (cmd.indexOf("open") > 0) {
@@ -190,44 +195,25 @@ void executeCommand(String cmd) {
 }
 
 void readAllSensors() {
-  // Flame Sensor
-  int flame_status = digitalRead(flame_sensor);
-  if (flame_status == 1) {
-    Serial.println("Result: Safe (No Fire)");
+
+  if (ledLight) {
+    Serial.println("Result: Led Light: ON");
   } else {
-    Serial.println("Result: Fire Detected!");
+    Serial.println("Result: Led Light: OFF");
   }
 
-  // Sound Sensor
-  int SoundStatus = digitalRead(sound_sensor);
-  if (SoundStatus == 1) {
-    Serial.println("Result: No Noise!");
+  if (rgbLight == "red") {
+    Serial.println("Result: RGB Light: RED");
+  } else if (rgbLight == "green") {
+    Serial.println("Result: RGB Light: GREEN");
+  } else if (rgbLight == "blue") {
+    Serial.println("Result: RGB Light: BLUE");
+  } else if (rgbLight == "none") {
+    Serial.println("Result: RGB Light: OFF");
   } else {
-    Serial.println("Result: Noise Detected!");
+    Serial.println("Result: RGB Light: UNKNOWN");
   }
 
-  // Motion Sensor
-  int gasStatus = digitalRead(motion_sensor);
-  if (gasStatus == 0) {
-    Serial.println("Result: No Intruder!");
-  } else {
-    Serial.println("Result: Intruder Detected!");
-  }
-
-  // Ultrasonic Sensor
-  int distance_val = watch();
-  Serial.print("Result: Distance: ");
-  Serial.print(distance_val);
-  Serial.println(" cm");
-
-  // DHT11 Sensor
-  DHT.read11(DHT11_PIN);
-  Serial.print("Result: Humidity: ");
-  Serial.print(DHT.humidity, 1);
-  Serial.println("%");
-  Serial.print("Result: Temperature: ");
-  Serial.print(DHT.temperature, 1);
-  Serial.println("C");
 }
 
 void handleKeypad() {
@@ -303,6 +289,7 @@ void close_door() {
   digitalWrite(greenLED, LOW);
   digitalWrite(redLED, HIGH);
 }
+
 
 boolean compare_rfid(unsigned char x[], unsigned char y[]) {
   for (int i = 0; i < 5; i++) {

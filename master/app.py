@@ -217,10 +217,21 @@ def get_sensors():
     for line in response_lines:
         if "Result: " in line:
             # Parse lines like "Result: Temperature: 24.00C"
+            # Ejercicio 3
             try:
                 key_part, value_part = line.split("Result: ", 1)[1].split(': ', 1)
                 key = key_part.strip().lower().replace(" ", "_")
                 sensor_data[key] = value_part.strip()
+                value = value_part.strip()
+
+                if value.upper() == "OFF":
+                    value = True
+                elif value.upper() == "ON":
+                    value = False
+                elif value.upper() in ["RED", "GREEN", "BLUE"]:
+                    value = value.upper()
+
+                sensor_data[key] = value
             except ValueError:
                 # Handle lines without a key-value structure, like "Result: Fire Detected!"
                 key = "status"

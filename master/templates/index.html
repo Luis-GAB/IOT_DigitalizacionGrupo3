@@ -1,137 +1,131 @@
 {% extends "base.html" %}
-
 {% block content %}
 
-<h1>Smarthome Control Panel</h1>
+<h1>Control Remoto de Luces</h1>
 
 <div class="control-section">
-    <h2>LED Control</h2>
-    <button class="btn btn-on" onclick="sendCommand('led on')">Turn ON</button>
-    <button class="btn btn-off" onclick="sendCommand('led off')">Turn OFF</button>
-</div>
-
-<div class="control-section">
-    <h2>RGB LED Control</h2>
-    <button class="btn btn-color" style="background-color: #dc3545;" onclick="sendCommand('rgb red')">Red</button>
-    <button class="btn btn-color" style="background-color: #28a745;" onclick="sendCommand('rgb green')">Green</button>
-    <button class="btn btn-color" style="background-color: #007bff;" onclick="sendCommand('rgb blue')">Blue</button>
-</div>
-
-<div class="control-section">
-    <h2>Buzzer Control</h2>
-    <button class="btn btn-on" onclick="sendCommand('buzzer on')">Turn ON</button>
-    <button class="btn btn-off" onclick="sendCommand('buzzer off')">Turn OFF</button>
-</div>
-
-<div class="control-section">
-    <h2>Servo (Door) Control</h2>
-    <button class="btn btn-action" onclick="sendCommand('servo open')">Open</button>
-    <button class="btn btn-action" onclick="sendCommand('servo half')">Half-Open</button>
-    <button class="btn btn-action" onclick="sendCommand('servo close')">Close</button>
-</div>
-
-<div class="control-section">
-    <h2>LCD Message</h2>
-    <form id="lcd-form" onsubmit="sendLcdMessage(event)">
-        <input type="text" id="lcd-message" name="message" placeholder="Enter message for LCD">
-        <button type="submit" class="btn btn-action">Send</button>
-    </form>
-</div>
-
-<div class="control-section">
-    <h2>Sensor Status</h2>
-    <button class="btn btn-action" onclick="updateSensorData()" style="margin-bottom: 15px;">Refresh Sensor
-        Data</button>
-    <div id="sensor-data">
-        <p><strong>Fire Safety:</strong> <span id="fire_safety">N/A</span></p>
-        <p><strong>Noise Status:</strong> <span id="noise_status">N/A</span></p>
-        <p><strong>Motion Status:</strong> <span id="motion_status">N/A</span></p>
-        <p><strong>Distance:</strong> <span id="distance">N/A</span></p>
-        <p><strong>Humidity:</strong> <span id="humidity">N/A</span></p>
-        <p><strong>Temperature:</strong> <span id="temperature">N/A</span></p>
+    <h2>Luces Individuales</h2>
+    <div class="led-grid">
+        <div class="led-card">
+            <div class="led-indicator" id="led-rojo-indicator"></div>
+            <h3>LED Rojo</h3>
+            <p>Estado: <span id="led_rojo_status">--</span></p>
+            <button class="btn btn-on" onclick="enviarComando('ledRojo on')">Encender</button>
+            <button class="btn btn-off" onclick="enviarComando('ledRojo off')">Apagar</button>
+        </div>
+        <div class="led-card">
+            <div class="led-indicator" id="led-verde-indicator"></div>
+            <h3>LED Verde</h3>
+            <p>Estado: <span id="led_verde_status">--</span></p>
+            <button class="btn btn-on" onclick="enviarComando('ledVerde on')">Encender</button>
+            <button class="btn btn-off" onclick="enviarComando('ledVerde off')">Apagar</button>
+        </div>
+        <div class="led-card">
+            <div class="led-indicator" id="led-amarillo-indicator"></div>
+            <h3>LED Amarillo</h3>
+            <p>Estado: <span id="led_amarillo_status">--</span></p>
+            <button class="btn btn-on" onclick="enviarComando('ledAmarillo on')">Encender</button>
+            <button class="btn btn-off" onclick="enviarComando('ledAmarillo off')">Apagar</button>
+        </div>
+        <div class="led-card">
+            <div class="led-indicator" id="led-puerta-indicator"></div>
+            <h3>Luz Exterior</h3>
+            <p>Estado: <span id="led_puerta_status">--</span></p>
+            <button class="btn btn-on" onclick="enviarComando('ledPuerta on')">Encender</button>
+            <button class="btn btn-off" onclick="enviarComando('ledPuerta off')">Apagar</button>
+        </div>
     </div>
 </div>
 
-<h2>Device Response Log</h2>
+<div class="control-section">
+    <h2>Luz RGB</h2>
+    <div class="rgb-row">
+        <div class="rgb-sliders">
+            <label>Rojo: <span id="r-val">0</span></label>
+            <input type="range" id="r-slider" min="0" max="255" value="0" oninput="actualizarVistaPrevia()">
+            <label>Verde: <span id="g-val">0</span></label>
+            <input type="range" id="g-slider" min="0" max="255" value="0" oninput="actualizarVistaPrevia()">
+            <label>Azul: <span id="b-val">0</span></label>
+            <input type="range" id="b-slider" min="0" max="255" value="0" oninput="actualizarVistaPrevia()">
+            <br>
+            <button class="btn btn-action" onclick="enviarRgb()">Aplicar Color</button>
+        </div>
+        <div style="text-align:center;">
+            <p>Vista previa</p>
+            <div id="rgb-preview" style="width:80px;height:80px;border-radius:8px;border:2px solid #333;background:#000;margin:0 auto;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="control-section" style="text-align:center;">
+    <h2>Control Global</h2>
+    <button class="btn btn-on btn-big" onclick="enviarComando('allLights on')">Encender Todo</button>
+    <button class="btn btn-off btn-big" onclick="enviarComando('allLights off')">Apagar Todo</button>
+</div>
+
+<h2>Registro de Respuestas</h2>
 <div id="response-log"></div>
 
-    <script>
-        function logResponse(message) {
-            const log = document.getElementById('response-log');
-            const time = new Date().toLocaleTimeString();
-            log.innerHTML += `<div>[${time}] ${message}</div>`;
-            log.scrollTop = log.scrollHeight;
-        }
-
-        function sendCommand(command) {
-            logResponse(`Sending: ${command}`);
-            const formData = new FormData();
-            formData.append('command', command);
-
-            fetch('/control', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    logResponse(`Received: ${data.response.join(', ')}`);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    logResponse(`<span style="color: #dc3545;">Error: Could not contact server.</span>`);
-                });
-        }
-
-        function sendLcdMessage(event) {
-            event.preventDefault();
-            const message = document.getElementById('lcd-message').value;
-            logResponse(`Sending LCD message: "${message}"`);
-            const formData = new FormData();
-            formData.append('command', 'lcd');
-            formData.append('message', message);
-
-            fetch('/control', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    logResponse(`Received: ${data.response.join(', ')}`);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    logResponse(`<span style="color: #dc3545;">Error: Could not contact server.</span>`);
-                });
-        }
-
-        function updateSensorData() {
-            logResponse('Requesting sensor data...');
-            fetch('/sensors')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        logResponse(`<span style="color: #dc3545;">Error: ${data.error}</span>`);
-                        return;
-                    }
-                    logResponse('Sensor data updated.');
-                    document.getElementById('fire_safety').textContent = data.fire_safety || 'N/A';
-                    document.getElementById('noise_status').textContent = data.noise_status || 'N/A';
-                    document.getElementById('motion_status').textContent = data.motion_status || 'N/A';
-                    document.getElementById('distance').textContent = data.distance || 'N/A';
-                    document.getElementById('humidity').textContent = data.humidity || 'N/A';
-                    document.getElementById('temperature').textContent = data.temperature || 'N/A';
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    logResponse(`<span style="color: #dc3545;">Error fetching sensor data.</span>`);
-                });
-        }
-
-        // Initial sensor data load and periodic refresh
-        document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(updateSensorData, 500); // Initial load after a brief delay
-            setInterval(updateSensorData, 10000); // Refresh every 10 seconds
-        });
-    </script>
+<script>
+function registrarRespuesta(m) {
+    var log = document.getElementById('response-log');
+    var t = new Date().toLocaleTimeString();
+    log.innerHTML += '<div>[' + t + '] ' + m + '</div>';
+    log.scrollTop = log.scrollHeight;
+}
+function enviarComando(cmd) {
+    registrarRespuesta('Enviando: ' + cmd);
+    var fd = new FormData();
+    fd.append('command', cmd);
+    fetch('/control', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            registrarRespuesta('Recibido: ' + d.response.join(', '));
+            setTimeout(actualizarLuces, 300);
+        })
+        .catch(function() { registrarRespuesta('Error: No se pudo contactar el servidor.'); });
+}
+function enviarRgb() {
+    enviarComando('rgb ' + document.getElementById('r-slider').value + ' ' + document.getElementById('g-slider').value + ' ' + document.getElementById('b-slider').value);
+}
+function actualizarVistaPrevia() {
+    var r = document.getElementById('r-slider').value;
+    var g = document.getElementById('g-slider').value;
+    var b = document.getElementById('b-slider').value;
+    document.getElementById('r-val').textContent = r;
+    document.getElementById('g-val').textContent = g;
+    document.getElementById('b-val').textContent = b;
+    document.getElementById('rgb-preview').style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+function actualizarEstadoLed(data) {
+    var lista = { led_rojo: 'rojo', led_verde: 'verde', led_amarillo: 'amarillo', led_puerta: 'puerta' };
+    var colores = { rojo: '#dc3545', verde: '#28a745', amarillo: '#ffc107', puerta: '#fff' };
+    for (var k in lista) {
+        var id = lista[k];
+        var se = document.getElementById(k + '_status');
+        var ie = document.getElementById('led-' + id + '-indicator');
+        var v = data[k] || 'OFF';
+        if (se) { se.textContent = v; se.className = v === 'ON' ? 'status-on' : 'status-off'; }
+        if (ie) { ie.style.background = v === 'ON' ? colores[id] : '#ccc'; }
+    }
+    document.getElementById('r-slider').value = parseInt(data.rgb_red) || 0;
+    document.getElementById('g-slider').value = parseInt(data.rgb_green) || 0;
+    document.getElementById('b-slider').value = parseInt(data.rgb_blue) || 0;
+    actualizarVistaPrevia();
+}
+function actualizarLuces() {
+    registrarRespuesta('Solicitando datos de luces...');
+    fetch('/luces')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.error) { registrarRespuesta('Error: ' + d.error); return; }
+            registrarRespuesta('Datos de luces actualizados.');
+            actualizarEstadoLed(d);
+        })
+        .catch(function() { registrarRespuesta('Error al obtener datos de luces.'); });
+}
+setTimeout(actualizarLuces, 500);
+setInterval(actualizarLuces, 10000);
+</script>
 
 {% endblock %}

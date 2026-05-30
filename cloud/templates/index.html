@@ -2,8 +2,7 @@
 <html>
 
 <head>
-    <title>Dashboard Telemetría</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Control Remoto de Luces — Caso 1</title>
 
     <style>
         body {
@@ -13,9 +12,7 @@
             padding: 20px;
         }
 
-        h2 {
-            margin-bottom: 10px;
-        }
+        h2, h3 { margin-bottom: 10px; }
 
         .container {
             max-width: 1100px;
@@ -46,30 +43,62 @@
             cursor: pointer;
         }
 
-        button:hover {
-            background-color: #0056b3;
+        button:hover { background-color: #0056b3; }
+
+        .btn-on { background-color: #28a745; }
+        .btn-on:hover { background-color: #218838; }
+        .btn-off { background-color: #dc3545; }
+        .btn-off:hover { background-color: #c82333; }
+        .btn-big { font-size: 16px; padding: 12px 25px; margin: 5px; }
+
+        select { padding: 8px; border-radius: 5px; }
+
+        .title { font-size: 20px; font-weight: bold; }
+
+        .led-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
         }
 
-        select {
-            padding: 8px;
-            border-radius: 5px;
+        .led-card {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
         }
 
-        textarea {
-            width: 100%;
-            border-radius: 6px;
-            padding: 10px;
-            font-family: monospace;
+        .led-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            border: 2px solid #666;
+            display: inline-block;
         }
 
-        canvas {
-            margin-top: 10px;
+        .rgb-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        .title {
-            font-size: 20px;
-            font-weight: bold;
+        .rgb-sliders { flex: 1; min-width: 250px; }
+        .rgb-sliders label { display: block; margin-top: 8px; font-weight: bold; }
+        .rgb-sliders input[type=range] { width: 100%; }
+
+        .rgb-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            border: 2px solid #333;
+            margin: 0 auto;
         }
+
+        .status-on { color: #28a745; font-weight: bold; }
+        .status-off { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 
@@ -79,13 +108,11 @@
 
     <!-- TOP BAR -->
     <div class="top-bar">
-        <div class="title">🏠 Telemetría {% if selected_house %}{{ selected_house }}{% else %}Sin datos{% endif %}</div>
+        <div class="title">Control Remoto de Luces {% if selected_house %}{{ selected_house }}{% else %}Sin datos{% endif %}</div>
 
-        <form action="/refresh" method="get" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='Actualizando...'">
+        <form action="/actualizar" method="get" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='Actualizando...'">
             <input type="hidden" name="house" value="{{ selected_house }}">
-            <button type="submit">
-                🔄 Actualizar
-            </button>
+            <button type="submit">Actualizar</button>
         </form>
     </div>
 
@@ -107,67 +134,154 @@
         {% endif %}
     </div>
 
-    <!-- GRÁFICA -->
+    <!-- CASO 1: PANEL DE LUCES -->
+    {% if selected_house %}
     <div class="card">
-        <h3>📊 Datos en tiempo real</h3>
-        <canvas id="chart"></canvas>
+        <h2>Control de Luces</h2>
+
+        <div class="led-grid">
+            <div class="led-card">
+                <div class="led-indicator" id="led-rojo-ind" style="background:{{ 'red' if lights_state.get('led_rojo','OFF')=='ON' else '#ccc' }};"></div>
+                <h3>LED Rojo</h3>
+                <p class="{{ 'status-on' if lights_state.get('led_rojo','OFF')=='ON' else 'status-off' }}" id="led_rojo_txt">
+                    {{ lights_state.get('led_rojo', 'OFF') }}
+                </p>
+                <button class="btn-on" onclick="cambiarLuz('rojo','on')">Encender</button>
+                <button class="btn-off" onclick="cambiarLuz('rojo','off')">Apagar</button>
+            </div>
+
+            <div class="led-card">
+                <div class="led-indicator" id="led-verde-ind" style="background:{{ 'green' if lights_state.get('led_verde','OFF')=='ON' else '#ccc' }};"></div>
+                <h3>LED Verde</h3>
+                <p class="{{ 'status-on' if lights_state.get('led_verde','OFF')=='ON' else 'status-off' }}" id="led_verde_txt">
+                    {{ lights_state.get('led_verde', 'OFF') }}
+                </p>
+                <button class="btn-on" onclick="cambiarLuz('verde','on')">Encender</button>
+                <button class="btn-off" onclick="cambiarLuz('verde','off')">Apagar</button>
+            </div>
+
+            <div class="led-card">
+                <div class="led-indicator" id="led-amarillo-ind" style="background:{{ '#ffc107' if lights_state.get('led_amarillo','OFF')=='ON' else '#ccc' }};"></div>
+                <h3>LED Amarillo</h3>
+                <p class="{{ 'status-on' if lights_state.get('led_amarillo','OFF')=='ON' else 'status-off' }}" id="led_amarillo_txt">
+                    {{ lights_state.get('led_amarillo', 'OFF') }}
+                </p>
+                <button class="btn-on" onclick="cambiarLuz('amarillo','on')">Encender</button>
+                <button class="btn-off" onclick="cambiarLuz('amarillo','off')">Apagar</button>
+            </div>
+
+            <div class="led-card">
+                <div class="led-indicator" id="led-puerta-ind" style="background:{{ 'white' if lights_state.get('led_puerta','OFF')=='ON' else '#ccc' }};"></div>
+                <h3>Luz Exterior (Puerta)</h3>
+                <p class="{{ 'status-on' if lights_state.get('led_puerta','OFF')=='ON' else 'status-off' }}" id="led_puerta_txt">
+                    {{ lights_state.get('led_puerta', 'OFF') }}
+                </p>
+                <button class="btn-on" onclick="cambiarLuz('puerta','on')">Encender</button>
+                <button class="btn-off" onclick="cambiarLuz('puerta','off')">Apagar</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h3>Luz RGB — Color Personalizado</h3>
+            <div class="rgb-row">
+                <div class="rgb-sliders">
+                    <label>Rojo: <span id="r-val">{{ lights_state.get('rgb_red','0') }}</span></label>
+                    <input type="range" id="r-slider" min="0" max="255" value="{{ lights_state.get('rgb_red','0') }}" oninput="actualizarVistaPrevia()">
+                    <label>Verde: <span id="g-val">{{ lights_state.get('rgb_green','0') }}</span></label>
+                    <input type="range" id="g-slider" min="0" max="255" value="{{ lights_state.get('rgb_green','0') }}" oninput="actualizarVistaPrevia()">
+                    <label>Azul: <span id="b-val">{{ lights_state.get('rgb_blue','0') }}</span></label>
+                    <input type="range" id="b-slider" min="0" max="255" value="{{ lights_state.get('rgb_blue','0') }}" oninput="actualizarVistaPrevia()">
+                    <br><br>
+                    <button onclick="aplicarRgb()">Aplicar Color</button>
+                </div>
+                <div style="text-align:center;">
+                    <p><strong>Vista previa</strong></p>
+                    <div class="rgb-preview" id="rgb-preview" style="background:rgb({{ lights_state.get('rgb_red','0') }},{{ lights_state.get('rgb_green','0') }},{{ lights_state.get('rgb_blue','0') }});"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <h3>Control Global</h3>
+            <button class="btn-on btn-big" onclick="cambiarTodasLuces('on')">Encender Todo</button>
+            <button class="btn-off btn-big" onclick="cambiarTodasLuces('off')">Apagar Todo</button>
+        </div>
     </div>
-
-    <!-- ENVÍO JSON -->
-    <div class="card">
-        <h3>📨 Enviar mensaje a la casa</h3>
-
-        <form method="post" action="/send">
-            <input type="hidden" name="house" value="{{ selected_house }}">
-
-            <textarea name="message" rows="6">
-{
-    "device": "LCD",
-    "message": "Hola mundo!!!"
-}
-            </textarea>
-
-            <br><br>
-            <button type="submit">Enviar mensaje</button>
-        </form>
-    </div>
+    {% endif %}
 
 </div>
 
 <script>
+    const casaSeleccionada = "{{ selected_house }}";
 
-const labels = {{ timestamps | tojson }};
-const temperature = {{ temperature | tojson }};
-const humidity = {{ humidity | tojson }};
-const distance = {{ distance | tojson }};
+    function cambiarLuz(lightType, action) {
+        const formData = new FormData();
+        formData.append('house', casaSeleccionada);
+        formData.append('light_type', lightType);
+        formData.append('action', action);
 
-new Chart(document.getElementById("chart"), {
-    type: "line",
-    data: {
-        labels: labels,
-        datasets: [
-            {
-                label: "Temperatura (°C)",
-                data: temperature,
-                borderColor: "red",
-                tension: 0.3
-            },
-            {
-                label: "Humedad (%)",
-                data: humidity,
-                borderColor: "blue",
-                tension: 0.3
-            },
-            {
-                label: "Distancia (cm)",
-                data: distance,
-                borderColor: "green",
-                tension: 0.3
-            }
-        ]
+        fetch('/luz', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                console.log('Light command sent:', data);
+                actualizarUiLuz(lightType, action === 'on' ? 'ON' : 'OFF');
+            })
+            .catch(err => console.error('Error:', err));
     }
-});
 
+    function aplicarRgb() {
+        const r = document.getElementById('r-slider').value;
+        const g = document.getElementById('g-slider').value;
+        const b = document.getElementById('b-slider').value;
+        const formData = new FormData();
+        formData.append('house', casaSeleccionada);
+        formData.append('light_type', 'rgb');
+        formData.append('action', 'on');
+        formData.append('red', r);
+        formData.append('green', g);
+        formData.append('blue', b);
+
+        fetch('/luz', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => console.log('RGB command sent:', data))
+            .catch(err => console.error('Error:', err));
+    }
+
+    function cambiarTodasLuces(action) {
+        const formData = new FormData();
+        formData.append('house', casaSeleccionada);
+        formData.append('action', action);
+
+        fetch('/luces', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                console.log('All lights command sent:', data);
+                const state = action === 'on' ? 'ON' : 'OFF';
+                ['rojo','verde','amarillo','puerta'].forEach(t => actualizarUiLuz(t, state));
+            })
+            .catch(err => console.error('Error:', err));
+    }
+
+    function actualizarUiLuz(lightType, state) {
+        const colorMap = { rojo: 'red', verde: 'green', amarillo: '#ffc107', puerta: 'white' };
+        const indEl = document.getElementById('led-' + lightType + '-ind');
+        const txtEl = document.getElementById('led_' + lightType + '_txt');
+        if (indEl) indEl.style.background = state === 'ON' ? colorMap[lightType] : '#ccc';
+        if (txtEl) {
+            txtEl.textContent = state;
+            txtEl.className = state === 'ON' ? 'status-on' : 'status-off';
+        }
+    }
+
+    function actualizarVistaPrevia() {
+        const r = document.getElementById('r-slider').value;
+        const g = document.getElementById('g-slider').value;
+        const b = document.getElementById('b-slider').value;
+        document.getElementById('r-val').textContent = r;
+        document.getElementById('g-val').textContent = g;
+        document.getElementById('b-val').textContent = b;
+        document.getElementById('rgb-preview').style.background = `rgb(${r},${g},${b})`;
+    }
 </script>
 
 </body>

@@ -4,51 +4,56 @@ from flask import Flask, render_template, request, jsonify
 
 from awsiot import mqtt5_client_builder
 from awscrt import mqtt5
-import threading, time
+import threading
 
 import json
-import time
 
 app = Flask(__name__)
 
-# --- Serial Communication Setup ---
-# NOTE: Please replace '/dev/ttyACM0' with the correct serial port for your Arduino.
-# On Raspberry Pi, it is typically /dev/ttyACM0 or /dev/ttyUSB0.
-# You can find the correct port by checking the output of `dmesg | grep tty` after plugging in your Arduino.
-SERIAL_PORT = '/dev/ttyACM0' 
 BAUD_RATE = 9600
 
+# Detecta automaticamente el puerto del Arduino probando rutas comunes
+def detectar_puerto():
+    posibles = ["/dev/ttyACM0", "/dev/ttyACM1", "/dev/ttyUSB0", "/dev/ttyUSB1"]
+    for puerto in posibles:
+        try:
+            s = serial.Serial(puerto, BAUD_RATE, timeout=1)
+            s.close()
+            print(f"Arduino detectado en: {puerto}")
+            return puerto
+        except serial.SerialException:
+            continue
+    return None
+
+SERIAL_PORT = detectar_puerto()
 ser = None
-try:
-    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-    time.sleep(2)  # Wait for the serial connection to initialize
-except serial.SerialException as e:
-    print(f"Error: Could not open serial port '{SERIAL_PORT}'. {e}")
-    print("Please ensure the Arduino is connected and the correct serial port is specified in app.py.")
+if SERIAL_PORT:
+    try:
+        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+        time.sleep(2)
+    except serial.SerialException as e:
+        print(f"Error al abrir {SERIAL_PORT}: {e}")
+else:
+    print("Arduino no detectado. Conecta la placa por USB y reinicia el servidor.")
 
 
-# Events and properties for AWS used within callbacks to progress sample
 connection_success_event = threading.Event()
 stopped_event = threading.Event()
-received_all_event = threading.Event()
 endpoint_AWS="a2xyhr7rc9cefs-ats.iot.us-east-1.amazonaws.com"
 cert_filepath_AWS="cert/Casa1.cert.pem"
 pri_key_filepath_AWS="cert/Casa1.private.key"
 clientId_AWS="basicPubSub"
-device_name_AWS="Casa1"
+nombre_casa="Casa1"
 message_topic_commands_AWS="command"
 message_topic_telemetry_AWS="telemetry"
 client = None
 iot_connected = False
 TIMEOUT_CONNECT_AWS = 100
 
-# Connection to AWS
-def connect_to_aws():
 
+def conectar_a_aws():
     global client, iot_connected
 
-    # Create MQTT5 client using mutual TLS via X509 Certificate and Private Key
-    print("==== Creating MQTT5 Client ====\n")
     client = mqtt5_client_builder.mtls_from_path(
         endpoint=endpoint_AWS,
         cert_filepath=cert_filepath_AWS,
@@ -60,19 +65,12 @@ def connect_to_aws():
         on_lifecycle_connection_failure=on_lifecycle_connection_failure_AWS,
         on_lifecycle_disconnection=on_lifecycle_disconnection_AWS,
         client_id=clientId_AWS)
-    
-    # Start the client, instructing the client to desire a connected state. The client will try to 
-    # establish a connection with the provided settings. If the client is disconnected while in this 
-    # state it will attempt to reconnect automatically.
-    print("==== Starting client ====")
+
     client.start()
 
-    # We await the `on_lifecycle_connection_success` callback to be invoked.
     if not connection_success_event.wait(TIMEOUT_CONNECT_AWS):
         raise TimeoutError("Connection timeout")
 
-
-    # Subscribe 
     print("==== Subscribing to topic '{}' ====".format(message_topic_commands_AWS))
     subscribe_future = client.subscribe(subscribe_packet=mqtt5.SubscribePacket(
         subscriptions=[mqtt5.Subscription(
@@ -84,38 +82,56 @@ def connect_to_aws():
 
     iot_connected = True
 
-# Callback when any IOT PUB is received
+
 def on_publish_received_AWS(publish_packet_data):
     publish_packet = publish_packet_data.publish_packet
     print("==== Received message from topic '{}': {} ====\n".format(
         publish_packet.topic, publish_packet.payload.decode('utf-8')))
 
-    # What to do with message
-    # Format the command for LCD messages
     command = json.loads(publish_packet.payload.decode('utf-8'))
-    if command['house'] == "Casa1":
-        print("Message for Casa1\n")
-        if command['device'] == "LCD":
-            print("Message for LCD\n")
-            message = command['message']
-            commandToHouse = f'lcd "{message}"'
-            response = send_command(commandToHouse)
-            print(f"Response from HOUSE {response}")
+    if command.get('house') != nombre_casa:
+        return
+
+    print(f"Message for {nombre_casa}\n")
+
+    if command.get('device') == "light":
+        light_type = command.get('light_type', '')
+        action = command.get('action', '')
+        if light_type == "rgb":
+            r = command.get('red', 0)
+            g = command.get('green', 0)
+            b = command.get('blue', 0)
+            commandToHouse = f"rgb {r} {g} {b}"
+        elif light_type == "rojo":
+            commandToHouse = f"ledRojo {action}"
+        elif light_type == "verde":
+            commandToHouse = f"ledVerde {action}"
+        elif light_type == "amarillo":
+            commandToHouse = f"ledAmarillo {action}"
+        elif light_type == "puerta":
+            commandToHouse = f"ledPuerta {action}"
+        else:
+            print(f"Unknown light_type: {light_type}")
+            return
+        response = enviar_comando(commandToHouse)
+        print(f"Response from HOUSE {response}")
+
+    elif command.get('device') == "lights":
+        action = command.get('action', '')
+        commandToHouse = f"allLights {action}"
+        response = enviar_comando(commandToHouse)
+        print(f"Response from HOUSE {response}")
 
 
-# Callback for the lifecycle event Stopped
 def on_lifecycle_stopped_AWS(lifecycle_stopped_data: mqtt5.LifecycleStoppedData):
     print("Lifecycle Stopped\n")
     stopped_event.set()
 
 
-# Callback for lifecycle event Attempting Connect
 def on_lifecycle_attempting_connect_AWS(lifecycle_attempting_connect_data: mqtt5.LifecycleAttemptingConnectData):
-    print("Lifecycle Connection Attempt\nConnecting to endpoint: '{}' with client ID'{}'".format(
-        endpoint_AWS, clientId_AWS))
+    print("Lifecycle Connection Attempt\n")
 
 
-# Callback for the lifecycle event Connection Success
 def on_lifecycle_connection_success_AWS(lifecycle_connect_success_data: mqtt5.LifecycleConnectSuccessData):
     connack_packet = lifecycle_connect_success_data.connack_packet
     print("Lifecycle Connection Success with reason code:{}\n".format(
@@ -123,29 +139,25 @@ def on_lifecycle_connection_success_AWS(lifecycle_connect_success_data: mqtt5.Li
     connection_success_event.set()
 
 
-# Callback for the lifecycle event Connection Failure
 def on_lifecycle_connection_failure_AWS(lifecycle_connection_failure: mqtt5.LifecycleConnectFailureData):
     print("Lifecycle Connection Failure with exception:{}".format(
         lifecycle_connection_failure.exception))
 
 
-# Callback for the lifecycle event Disconnection
 def on_lifecycle_disconnection_AWS(lifecycle_disconnect_data: mqtt5.LifecycleDisconnectData):
     print("Lifecycle Disconnected with reason code:{}".format(
         lifecycle_disconnect_data.disconnect_packet.reason_code if lifecycle_disconnect_data.disconnect_packet else "None"))
 
 
-def send_command(command):
-    """Sends a command to the Arduino and reads the response."""
+def enviar_comando(command):
     if not ser or not ser.is_open:
-        return ["Serial port is not available."]
-    
-    print(f"Sending command: {command}")
+        return ["Puerto serie no disponible."]
+
+    print(f"Enviando comando: {command}")
     ser.write((command + '\n').encode('utf-8'))
-    
-    # Wait a moment for the Arduino to process and respond
-    time.sleep(0.5) 
-    
+
+    time.sleep(0.5)
+
     responses = []
     while ser.in_waiting > 0:
         try:
@@ -153,30 +165,30 @@ def send_command(command):
             if line:
                 responses.append(line)
         except UnicodeDecodeError:
-            pass # Ignore occasional decoding errors
-            
-    print(f"Received response: {responses}")
-    return responses if responses else ["No response from device."]
+            pass
+
+    print(f"Respuesta recibida: {responses}")
+    return responses if responses else ["Sin respuesta del dispositivo."]
+
 
 # --- Web Routes ---
 
 @app.route('/')
 def index():
-    """Renders the main control panel page."""
     return render_template(
         'index.html',
         endpoint_AWS=endpoint_AWS,
         cert_filepath_AWS=cert_filepath_AWS,
         pri_key_filepath_AWS=pri_key_filepath_AWS,
         clientId_AWS=clientId_AWS,
-        device_name_AWS=device_name_AWS,
+        nombre_casa=nombre_casa,
         message_topic_commands_AWS=message_topic_commands_AWS,
         message_topic_telemetry_AWS=message_topic_telemetry_AWS
     )
 
+
 @app.route("/aws")
 def aws_config():
-
     return render_template(
         "aws_config.html",
         title="AWS Configuration",
@@ -184,64 +196,53 @@ def aws_config():
         cert_filepath_AWS=cert_filepath_AWS,
         pri_key_filepath_AWS=pri_key_filepath_AWS,
         clientId_AWS=clientId_AWS,
-        device_name_AWS=device_name_AWS,
+        nombre_casa=nombre_casa,
         message_topic_commands_AWS=message_topic_commands_AWS,
         message_topic_telemetry_AWS=message_topic_telemetry_AWS
     )
 
+
 @app.route('/control', methods=['POST'])
 def control():
-    """Handles generic commands like LED, buzzer, and servo control."""
     command = request.form.get('command')
     if not command:
         return jsonify({"status": "error", "message": "No command provided."}), 400
-        
-    # Format the command for LCD messages
-    if command.startswith("lcd"):
-        message = request.form.get('message', '')
-        command = f'lcd "{message}"'
 
-    response = send_command(command)
+    response = enviar_comando(command)
     return jsonify({"status": "success", "command": command, "response": response})
 
-@app.route('/sensors')
+
+@app.route('/luces')
 def get_sensors():
-    """Specifically handles the 'sensors' command to fetch all sensor data."""
     if not ser or not ser.is_open:
-        return jsonify({"error": "Serial port not available."})
+        return jsonify({"error": "Puerto serie no disponible."})
 
-    ser.flushInput()  # Clear any old data in the input buffer
-    response_lines = send_command("sensors")
-    
-    sensor_data = {}
+    ser.flushInput()
+    response_lines = enviar_comando("lights")
+
+    lights_data = {}
     for line in response_lines:
-        if "Result: " in line:
-            # Parse lines like "Result: Temperature: 24.00C"
+        if "Resultado: " in line:
             try:
-                key_part, value_part = line.split("Result: ", 1)[1].split(': ', 1)
+                key_part, value_part = line.split("Resultado: ", 1)[1].split(': ', 1)
                 key = key_part.strip().lower().replace(" ", "_")
-                sensor_data[key] = value_part.strip()
+                lights_data[key] = value_part.strip()
             except ValueError:
-                # Handle lines without a key-value structure, like "Result: Fire Detected!"
-                key = "status"
-                value = line.split("Result: ", 1)[1]
-                if "fire" in value.lower():
-                    sensor_data["fire_safety"] = value
-                elif "noise" in value.lower():
-                    sensor_data["noise_status"] = value
-                elif "intruder" in value.lower():
-                    sensor_data["motion_status"] = value
+                pass
 
-    # Add data for the IOT Message routing
-    sensor_data["house"] = device_name_AWS
-    sensor_data["timestamp"] = int(time.time())
+    for key in ["led_rojo", "led_verde", "led_amarillo", "led_puerta",
+                "rgb_red", "rgb_green", "rgb_blue"]:
+        if key not in lights_data:
+            lights_data[key] = "OFF" if key.startswith("led_") else "0"
 
-    print(f"Parsed Sensor Data: {sensor_data}")
-    mesage_json = json.dumps(sensor_data)
+    lights_data["house"] = nombre_casa
+    lights_data["timestamp"] = int(time.time())
 
-    # We send json message to IOTCore AWS
+    print(f"Parsed Lights Data: {lights_data}")
+    mesage_json = json.dumps(lights_data)
+
     if iot_connected:
-        print(f"Publishing message to topic '{message_topic_telemetry_AWS}': {mesage_json}")
+        print(f"Publishing to topic '{message_topic_telemetry_AWS}': {mesage_json}")
         publish_future = client.publish(
             mqtt5.PublishPacket(
                 topic=message_topic_telemetry_AWS,
@@ -249,52 +250,32 @@ def get_sensors():
                 qos=mqtt5.QoS.AT_LEAST_ONCE
             )
         )
-
         publish_completion_data = publish_future.result(TIMEOUT_CONNECT_AWS)
         print("PubAck received with {}\n".format(repr(publish_completion_data.puback.reason_code)))
 
-    return jsonify(sensor_data)
+    return jsonify(lights_data)
 
-@app.route('/connect_iot', methods=['POST'])
-def connect_iot():
 
-    global endpoint_AWS
-    global cert_filepath_AWS
-    global pri_key_filepath_AWS
-    global clientId_AWS
-    global device_name_AWS
-    global message_topic_commands_AWS
-    global message_topic_telemetry_AWS
+@app.route('/conectar_iot', methods=['POST'])
+def conectar_iot():
+    global endpoint_AWS, cert_filepath_AWS, pri_key_filepath_AWS
+    global clientId_AWS, nombre_casa, message_topic_commands_AWS, message_topic_telemetry_AWS
 
     endpoint_AWS = request.form.get("endpoint_AWS")
     cert_filepath_AWS = request.form.get("cert_filepath_AWS")
     pri_key_filepath_AWS = request.form.get("pri_key_filepath_AWS")
     clientId_AWS = request.form.get("clientId_AWS")
-    device_name_AWS = request.form.get("device_name_AWS")
+    nombre_casa = request.form.get("nombre_casa")
     message_topic_commands_AWS = request.form.get("message_topic_commands_AWS")
     message_topic_telemetry_AWS = request.form.get("message_topic_telemetry_AWS")
 
     try:
-
-        connect_to_aws()
-
-        return jsonify({
-            "status": "success",
-            "message": "Connected to AWS IoT"
-        })
-
+        conectar_a_aws()
+        return jsonify({"status": "success", "message": "Conectado a AWS IoT"})
     except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        })
 
 if __name__ == '__main__':
-
     print("Starting Flask server. Open http://<your-pi-ip-address>:5000 in a browser.")
     app.run(host='0.0.0.0', port=5000)
-
-
-
-

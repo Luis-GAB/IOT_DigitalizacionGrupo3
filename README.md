@@ -19,7 +19,9 @@ Para ello nos encontramos con la arquitectura de:
 - **MASTER (Raspberry Pi)**: Controla a traves del Raspberry Pi los controles LEDs de la casa.
 - **CLOUD (AWS EC2)**: Controla remotamente desde cualquier lugar los controles LEDs de la casa.
 
+# Paso a paso para uso de la casa
 ## Cómo verificar cada capa
+Antes de nada, que sepas que le hemos pedido a la IA que nos crease una función llamada `detectar_puerto()` que escanea automáticamente los puertos serie disponibles para encontrar el Arduino, evitando tener que configurar manualmente el puerto en cada conexión. Esto lo decidimos hacer asi porque cuando te conectabas a la casa y con esta encendida desconectabas el cable y lo conectabas el puerto cambiaba y la configuracion tenia el puerto estatico y por tanto no iba nada.
 ### SLAVE (Arduino)
 - Conectar Arduino al PC por USB
 - En console: 

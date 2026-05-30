@@ -1,175 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-
-        h1,
-        h2 {
-            color: #1c1e21;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .control-section {
-            margin-bottom: 25px;
-            padding-bottom: 25px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .control-section:last-child {
-            border-bottom: none;
-        }
-
-        .control-section h2 {
-            margin-top: 0;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-        }
-
-        .btn {
-            padding: 12px 18px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            margin: 5px;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-on {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .btn-off {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .btn-color {
-            color: white;
-        }
-
-        .btn-action {
-            background-color: #007bff;
-            color: white;
-        }
-
-        #lcd-form input[type="text"] {
-            padding: 12px;
-            width: 70%;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        #lcd-form .btn {
-            width: 25%;
-        }
-
-        #iot-form input[type="text"] {
-            padding: 12px;
-            width: 70%;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        #iot-form .btn {
-            width: 25%;
-        }
-
-        label{
-            display:block;
-            margin-top:10px;
-            font-weight:bold;
-        }
-
-        #sensor-data {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
-
-        #sensor-data p {
-            margin: 8px 0;
-            font-size: 16px;
-        }
-
-        #response-log {
-            margin-top: 20px;
-            background-color: #212529;
-            color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-            height: 150px;
-            overflow-y: scroll;
-            font-size: 14px;
-        }
-
-        #response-log>div {
-            padding-bottom: 5px;
-            border-bottom: 1px solid #495057;
-        }
-
-        #response-log>div:last-child {
-            border-bottom: none;
-        }
-
-        nav{
-            margin-bottom:20px;
-        }
-
-        nav a{
-            margin-right:15px;
-            text-decoration:none;
-            font-weight:bold;
-            color:#007bff;
-        }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { color: #1c1e21; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 15px; text-decoration: none; font-weight: bold; color: #007bff; }
+        .control-section { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #ddd; }
+        .control-section:last-child { border-bottom: none; }
+        .led-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+        .led-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; text-align: center; }
+        .led-indicator { width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 8px; border: 2px solid #666; }
+        .btn { padding: 10px 16px; font-size: 14px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; margin: 4px; }
+        .btn-on { background: #28a745; color: white; }
+        .btn-off { background: #dc3545; color: white; }
+        .btn-action { background: #007bff; color: white; }
+        .btn-big { font-size: 16px; padding: 12px 25px; }
+        .rgb-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .rgb-sliders { flex: 1; min-width: 250px; }
+        .rgb-sliders label { display: block; margin-top: 8px; font-weight: bold; }
+        .rgb-sliders input[type=range] { width: 100%; }
+        .rgb-preview { width: 80px; height: 80px; border-radius: 8px; border: 2px solid #333; margin: 0 auto; }
+        #response-log { margin-top: 15px; background: #212529; color: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; height: 150px; overflow-y: scroll; font-size: 13px; }
+        #response-log>div { padding-bottom: 5px; border-bottom: 1px solid #495057; }
+        .status-on { color: #28a745; font-weight: bold; }
+        .status-off { color: #dc3545; font-weight: bold; }
     </style>
-
 </head>
 
 <body>
-
     <div class="container">
-
         <nav>
-            <a href="/">Control Panel</a>
+            <a href="/">Control de Luces</a>
             <a href="/aws">AWS Configuration</a>
         </nav>
-
-        {% block content %}
-        {% endblock %}
-
+        {% block content %}{% endblock %}
     </div>
-
 </body>
-
 </html>

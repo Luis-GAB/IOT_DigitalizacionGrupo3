@@ -1,117 +1,41 @@
 /*
-   ______            __                  _            __                __________
-  / ____/_  ______ _/ /__________ _   __(_)__  ____  / /_____  _____   / ____/  _/
- / /   / / / / __ `/ __/ ___/ __ \ | / / / _ \/ __ \/ __/ __ \/ ___/  / /    / /  
-/ /___/ /_/ / /_/ / /_/ /  / /_/ / |/ / /  __/ / / / /_/ /_/ (__  )  / /____/ /   
-\____/\__,_/\__,_/\__/_/   \____/|___/_/\___/\_/ /_/\__/\____/____/   \____/___/   
-                                                                                
-    __             ___              __             ______   __   
-   / /_  __  __   /   |  ____  ____/ /__  _____   / ____/  / /   
-  / __ \/ / / /  / /| | / __ \/ __  / _ \/ ___/  / /_     / /    
- / /_/ / /_/ /  / ___ |/ / / / /_/ /  __/ /     / __/  _ / /____ 
-/_.___/\__, /  /_/  |_/_/ /_/\__,_/\___/\_/     /_/    (_)_____(_)
-      /____/   
-                                           
- Smarthome Serial Communication Project
- 
- This project integrates all the smarthome lessons into a single Arduino sketch.
- It uses Serial communication for requests and results.
-
- CopyRight Ander F.L. <ander_frago@cuatrovientos.org> June 2024
+   Smarthome Serial Communication - Caso 1: Control Remoto de Luces
+   CopyRight Ander F.L. <ander_frago@cuatrovientos.org> June 2024
 */
 
-// Included Libraries
-#include <LiquidCrystal_I2C.h>
-#include <Servo.h>
-#include <SPI.h>
-#include <RFID.h>
-#include <dht.h>
-#include <Keypad.h>
-
-// Pin Definitions
 #define redLED 13
 #define greenLED 12
-#define buzzer 5
-#define flame_sensor A1
-#define sound_sensor A2
-#define motion_sensor 4
 #define whiteLED 9
 #define yellowLED 10
-#define Trig_PIN 25
-#define Echo_PIN 26
-#define SERVO_PIN 3
-#define RFID_SDA 48
-#define RFID_RST 49
-#define DHT11_PIN 2
 #define redPin_RGB 24
 #define greenPin_RGB 23
 #define bluePin_RGB 22
 
-// LCD Display
-LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// Servo Motor
-Servo head;
-
-// RFID
-unsigned char my_rfid[] = {227, 10, 252, 39, 50}; // replace with your RFID value
-RFID rfid(RFID_SDA, RFID_RST);
-
-// DHT Sensor
-dht DHT;
-
-// Keypad
-const byte ROWS = 4;
-const byte COLS = 4;
-char hexaKeys[ROWS][COLS] = {
-  {'1', '2', '3', 'A'},
-  {'4', '5', '6', 'B'},
-  {'7', '8', '9', 'C'},
-  {'*', '0', '#', 'D'}
-};
-byte rowPins[ROWS] = {33, 35, 37, 39};
-byte colPins[COLS] = {41, 43, 45, 47};
-Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
+bool estadoRojo = false;
+bool estadoVerde = false;
+bool estadoAmarillo = false;
+bool estadoPuerta = false;
+int rRGB = 0, gRGB = 0, bRGB = 0;
 
 String command = "";
-bool ledLight = false;
-String rgbLight = "none";
 
 void setup() {
-  // Initialize Serial
   Serial.begin(9600);
   command.reserve(256);
 
-  // Initialize Pins
   pinMode(redLED, OUTPUT);
   pinMode(greenLED, OUTPUT);
-  pinMode(buzzer, OUTPUT);
-  pinMode(flame_sensor, INPUT);
-  pinMode(sound_sensor, INPUT);
-  pinMode(motion_sensor, INPUT);
   pinMode(whiteLED, OUTPUT);
   pinMode(yellowLED, OUTPUT);
-  pinMode(Trig_PIN, OUTPUT);
-  pinMode(Echo_PIN, INPUT);
   pinMode(redPin_RGB, OUTPUT);
   pinMode(greenPin_RGB, OUTPUT);
   pinMode(bluePin_RGB, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
 
-  // Initialize LCD
-  lcd.init();
-  lcd.backlight();
-  lcd.print("Smarthome Ready!");
-
-  // Initialize SPI and RFID
-  SPI.begin();
-  rfid.init();
-
-  Serial.println("Smarthome Ready. Enter commands via Serial monitor.");
+  Serial.println("Casa domotica lista. Introduce comandos por el monitor Serie.");
 }
 
 void loop() {
-  // Handle Serial Commands
   if (Serial.available() > 0) {
     char c = Serial.read();
     if (c == '\n') {
@@ -121,191 +45,131 @@ void loop() {
       command += c;
     }
   }
-
-  // Handle Keypad Input
-  handleKeypad();
-  
-  // Handle RFID
-  handleRFID();
 }
 
 void executeCommand(String cmd) {
   cmd.trim();
   if (cmd.length() == 0) return;
 
-  Serial.print("Executing command: ");
+  Serial.print("Ejecutando comando: ");
   Serial.println(cmd);
 
-  if (cmd.startsWith("ledGreen")) {
+  if (cmd.startsWith("ledRojo") || cmd.startsWith("ledRed")) {
+    if (cmd.indexOf("on") > 0) {
+      digitalWrite(redLED, HIGH);
+      estadoRojo = true;
+      Serial.println("Resultado: led_rojo: ON");
+    } else if (cmd.indexOf("off") > 0) {
+      digitalWrite(redLED, LOW);
+      estadoRojo = false;
+      Serial.println("Resultado: led_rojo: OFF");
+    }
+  } else if (cmd.startsWith("ledVerde") || cmd.startsWith("ledGreen")) {
     if (cmd.indexOf("on") > 0) {
       digitalWrite(greenLED, HIGH);
-      Serial.println("Result: Green LED is ON");
+      estadoVerde = true;
+      Serial.println("Resultado: led_verde: ON");
     } else if (cmd.indexOf("off") > 0) {
       digitalWrite(greenLED, LOW);
-      Serial.println("Result: Green LED is OFF");
+      estadoVerde = false;
+      Serial.println("Resultado: led_verde: OFF");
+    }
+  } else if (cmd.startsWith("ledAmarillo") || cmd.startsWith("ledYellow")) {
+    if (cmd.indexOf("on") > 0) {
+      digitalWrite(yellowLED, HIGH);
+      estadoAmarillo = true;
+      Serial.println("Resultado: led_amarillo: ON");
+    } else if (cmd.indexOf("off") > 0) {
+      digitalWrite(yellowLED, LOW);
+      estadoAmarillo = false;
+      Serial.println("Resultado: led_amarillo: OFF");
+    }
+   } else if (cmd.startsWith("ledPuerta") || cmd.startsWith("ledDoor") || cmd.startsWith("ledWhite") || cmd.startsWith("ledBlanco")) { 
+    if (cmd.indexOf("on") > 0) {
+      digitalWrite(whiteLED, HIGH);
+      estadoPuerta = true;
+      Serial.println("Resultado: led_puerta: ON");
+    } else if (cmd.indexOf("off") > 0) {
+      digitalWrite(whiteLED, LOW);
+      estadoPuerta = false;
+      Serial.println("Resultado: led_puerta: OFF");
+    }
+  } else if (cmd.startsWith("allLights") || cmd.startsWith("todasLuces")) {
+    if (cmd.indexOf("on") > 0) {
+      digitalWrite(redLED, HIGH);    estadoRojo = true;
+      digitalWrite(greenLED, HIGH);  estadoVerde = true;
+      digitalWrite(yellowLED, HIGH); estadoAmarillo = true;
+      digitalWrite(whiteLED, HIGH);  estadoPuerta = true;
+      Serial.println("Resultado: all_lights: ON");
+    } else if (cmd.indexOf("off") > 0) {
+      digitalWrite(redLED, LOW);    estadoRojo = false;
+      digitalWrite(greenLED, LOW);  estadoVerde = false;
+      digitalWrite(yellowLED, LOW); estadoAmarillo = false;
+      digitalWrite(whiteLED, LOW);  estadoPuerta = false;
+      color(0, 0, 0);  rRGB = 0; gRGB = 0; bRGB = 0;
+      Serial.println("Resultado: all_lights: OFF");
     }
   } else if (cmd.startsWith("rgb")) {
-    if (cmd.indexOf("red") > 0) {
-      color(255, 0, 0);
-      Serial.println("Result: RGB set to RED");
-      rgbLight = "red";
+    int firstSpace = cmd.indexOf(' ');
+    int secondSpace = cmd.indexOf(' ', firstSpace + 1);
+    if (firstSpace > 0 && secondSpace > 0) {
+      int r = cmd.substring(firstSpace + 1, secondSpace).toInt();
+      int thirdSpace = cmd.indexOf(' ', secondSpace + 1);
+      int g = 0, b = 0;
+      if (thirdSpace > 0) {
+        g = cmd.substring(secondSpace + 1, thirdSpace).toInt();
+        b = cmd.substring(thirdSpace + 1).toInt();
+      } else {
+        g = cmd.substring(secondSpace + 1).toInt();
+        b = 0;
+      }
+      r = constrain(r, 0, 255);
+      g = constrain(g, 0, 255);
+      b = constrain(b, 0, 255);
+      color(r, g, b);
+      rRGB = r; gRGB = g; bRGB = b;
+      Serial.print("Resultado: rgb_red: ");
+      Serial.println(r);
+      Serial.print("Resultado: rgb_green: ");
+      Serial.println(g);
+      Serial.print("Resultado: rgb_blue: ");
+      Serial.println(b);
+    } else if (cmd.indexOf("red") > 0) {
+      color(255, 0, 0); rRGB = 255; gRGB = 0; bRGB = 0;
+      Serial.println("Resultado: RGB configurado a ROJO");
     } else if (cmd.indexOf("green") > 0) {
-      color(0, 255, 0);
-      Serial.println("Result: RGB set to GREEN");
-      rgbLight = "green";
+      color(0, 255, 0); rRGB = 0; gRGB = 255; bRGB = 0;
+      Serial.println("Resultado: RGB configurado a VERDE");
     } else if (cmd.indexOf("blue") > 0) {
-      color(0, 0, 255);
-      Serial.println("Result: RGB set to BLUE");
-      rgbLight = "blue";
+      color(0, 0, 255); rRGB = 0; gRGB = 0; bRGB = 255;
+      Serial.println("Resultado: RGB configurado a AZUL");
     }
-  } else if (cmd.startsWith("buzzer")) {
-    if (cmd.indexOf("on") > 0) {
-      digitalWrite(buzzer, HIGH);
-      Serial.println("Result: Buzzer is ON");
-    } else if (cmd.indexOf("off") > 0) {
-      digitalWrite(buzzer, LOW);
-      Serial.println("Result: Buzzer is OFF");
-    }
-  } else if (cmd.startsWith("sensores")) {
+  } else if (cmd.startsWith("lights") || cmd.startsWith("estadoLuces") || cmd.startsWith("lightsStatus")) {
     readAllSensors();
-  } else if (cmd.startsWith("servo")) {
-      if (cmd.indexOf("open") > 0) {
-        open_door();
-        Serial.println("Result: Servo OPEN");
-      } else if (cmd.indexOf("half") > 0) {
-        half_open();
-        Serial.println("Result: Servo HALF-OPEN");
-      } else if (cmd.indexOf("close") > 0) {
-        close_door();
-        Serial.println("Result: Servo CLOSE");
-      }
-  } else if (cmd.startsWith("lcd")) {
-      int firstQuote = cmd.indexOf('"');
-      int secondQuote = cmd.lastIndexOf('"');
-      if (firstQuote != -1 && secondQuote != -1 && firstQuote != secondQuote) {
-        String msg = cmd.substring(firstQuote + 1, secondQuote);
-        lcd.clear();
-        lcd.backlight();
-        lcd.print(msg);
-        Serial.println("Result: LCD message sent");
-      }
   } else {
-    Serial.println("Unknown command");
+    Serial.println("Comando desconocido");
   }
 }
 
 void readAllSensors() {
-
-  if (ledLight) {
-    Serial.println("Result: Led Light: ON");
-  } else {
-    Serial.println("Result: Led Light: OFF");
-  }
-
-  if (rgbLight == "red") {
-    Serial.println("Result: RGB Light: RED");
-  } else if (rgbLight == "green") {
-    Serial.println("Result: RGB Light: GREEN");
-  } else if (rgbLight == "blue") {
-    Serial.println("Result: RGB Light: BLUE");
-  } else if (rgbLight == "none") {
-    Serial.println("Result: RGB Light: OFF");
-  } else {
-    Serial.println("Result: RGB Light: UNKNOWN");
-  }
-
+  Serial.print("Resultado: led_rojo: ");
+  Serial.println(estadoRojo ? "ON" : "OFF");
+  Serial.print("Resultado: led_verde: ");
+  Serial.println(estadoVerde ? "ON" : "OFF");
+  Serial.print("Resultado: led_amarillo: ");
+  Serial.println(estadoAmarillo ? "ON" : "OFF");
+  Serial.print("Resultado: led_puerta: ");
+  Serial.println(estadoPuerta ? "ON" : "OFF");
+  Serial.print("Resultado: rgb_red: ");
+  Serial.println(rRGB);
+  Serial.print("Resultado: rgb_green: ");
+  Serial.println(gRGB);
+  Serial.print("Resultado: rgb_blue: ");
+  Serial.println(bRGB);
 }
 
-void handleKeypad() {
-  char customKey = customKeypad.getKey();
-  if (customKey == '*') {
-    close_door();
-    Serial.println("Keypad: Door Closed");
-  }
-  if (customKey == '#') {
-    open_door();
-    Serial.println("Keypad: Door Opened");
-  }
-  if (customKey == '0') {
-    half_open();
-    Serial.println("Keypad: Door Half-Opened");
-  }
-}
-
-void handleRFID() {
-  if (rfid.isCard()) {
-    if (rfid.readCardSerial()) {
-      if (compare_rfid(rfid.serNum, my_rfid)) {
-        open_door();
-        Serial.println("RFID: Access Granted");
-      } else {
-        close_door();
-        digitalWrite(buzzer, HIGH);
-        delay(1000);
-        digitalWrite(buzzer, LOW);
-        Serial.println("RFID: Access Denied");
-      }
-    }
-    rfid.halt();
-  }
-}
-
-// Helper functions
 void color(unsigned char red, unsigned char green, unsigned char blue) {
   analogWrite(redPin_RGB, red);
   analogWrite(greenPin_RGB, green);
   analogWrite(bluePin_RGB, blue);
-}
-
-void open_door() {
-  head.attach(SERVO_PIN);
-  delay(300);
-  head.write(180);
-  delay(400);
-  head.detach();
-  digitalWrite(SERVO_PIN, LOW);
-  digitalWrite(greenLED, HIGH);
-  digitalWrite(redLED, LOW);
-}
-
-void half_open() {
-  head.attach(SERVO_PIN);
-  delay(300);
-  head.write(90);
-  delay(400);
-  head.detach();
-  digitalWrite(SERVO_PIN, LOW);
-  digitalWrite(greenLED, LOW);
-  digitalWrite(redLED, LOW);
-}
-
-void close_door() {
-  head.attach(SERVO_PIN);
-  delay(300);
-  head.write(0);
-  delay(400);
-  head.detach();
-  digitalWrite(SERVO_PIN, LOW);
-  digitalWrite(greenLED, LOW);
-  digitalWrite(redLED, HIGH);
-}
-
-
-boolean compare_rfid(unsigned char x[], unsigned char y[]) {
-  for (int i = 0; i < 5; i++) {
-    if (x[i] != y[i]) return false;
-  }
-  return true;
-}
-
-int watch() {
-  long echo_distance;
-  digitalWrite(Trig_PIN, LOW);
-  delayMicroseconds(5);
-  digitalWrite(Trig_PIN, HIGH);
-  delayMicroseconds(15);
-  digitalWrite(Trig_PIN, LOW);
-  echo_distance = pulseIn(Echo_PIN, HIGH);
-  echo_distance = echo_distance * 0.01657;
-  return round(echo_distance);
 }
